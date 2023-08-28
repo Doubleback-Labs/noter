@@ -25,6 +25,8 @@ jobs:
       - name: Build
         run: |
           cd /home/runner/work/noter
+          ls -al
+          pwd
           /home/runner/go/bin/mage build
 
       - name: Upload
