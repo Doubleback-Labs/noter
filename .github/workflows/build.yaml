@@ -12,14 +12,26 @@ jobs:
         with:
            go-version: '1.21.0'
 
-      - name: Build
+      - name: Build Linux
         uses: magefile/mage-action@v2
         with:
           version: latest
-          args: build
+          args: buildlinux
+
+      - name: Build MacOS
+        uses: magefile/mage-action@v2
+        with:
+          version: latest
+          args: buildmacos
 
       - name: Upload
         uses: actions/upload-artifact@v3
         with:
           name: noter
-          path: noter
+          path: ./bin/linux/noter
+
+      - name: Upload
+        uses: actions/upload-artifact@v3
+        with:
+          name: noter-mac
+          path: ./bin/macos/noter
