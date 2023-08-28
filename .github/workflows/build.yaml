@@ -21,8 +21,7 @@ jobs:
           ls -al
           cd mage
           go run bootstrap.go install
-          echo $PATH
-          echo ${{env.GOPATH}}
+          cd ..
 
       - name: Build
         run: /home/runner/go/bin/mage build
