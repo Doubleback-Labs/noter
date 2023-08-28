@@ -16,8 +16,11 @@ jobs:
 
       - name: Mage
         run: |
+          echo $PATH
+          echo $GOPATH
+          echo $GOROOT
           go get -d github.com/magefile/mage
-          go run $env:GOPATH/src/github.com/magefile/mage/bootstrap.go install
+          go run $GOPATH/src/github.com/magefile/mage/bootstrap.go install
 
       - name: Build
         run: mage build
