@@ -21,10 +21,11 @@ jobs:
           ls -al
           cd mage
           go run bootstrap.go install
-          cd ..
 
       - name: Build
-        run: /home/runner/go/bin/mage build
+        run: |
+          cd /home/runner/work/noter
+          /home/runner/go/bin/mage build
 
       - name: Upload
         uses: actions/upload-artifact@v3
