@@ -9,7 +9,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          repository: github.com/magefile/mage
+          repository: magefile/mage
       - uses: actions/setup-go@v4
         with:
            go-version-file: 'go.mod'
