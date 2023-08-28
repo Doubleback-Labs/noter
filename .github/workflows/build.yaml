@@ -24,7 +24,7 @@ jobs:
 
       - name: Build
         run: |
-          cd /home/runner/work/noter
+          cd /home/runner/work/noter/noter
           ls -al
           pwd
           /home/runner/go/bin/mage build
