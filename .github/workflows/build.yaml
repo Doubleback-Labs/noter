@@ -10,6 +10,8 @@ jobs:
       - uses: actions/checkout@v3
         with:
           repository: magefile/mage
+          fetch-depth: 0
+          path: mage
       - uses: actions/setup-go@v4
         with:
            go-version-file: 'go.mod'
@@ -17,12 +19,13 @@ jobs:
       - name: Mage
         run: |
           ls -al
+          cd mage
           go run bootstrap.go install
           echo $PATH
           echo ${{env.GOPATH}}
 
       - name: Build
-        run: mage build
+        run: /home/runner/go/bin/mage build
 
       - name: Upload
         uses: actions/upload-artifact@v3
