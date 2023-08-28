@@ -8,19 +8,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-
-      - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.21.0'
+           go-version-file: 'go.mod'
 
       - name: Mage
+        uses: actions/checkout@master@v3
+        with:
+          repository: github.com/magefile/mage
         run: |
+          cd mage
+          go run bootstrap.go install
           echo $PATH
-          echo $GOPATH
-          echo $GOROOT
-          go get -d github.com/magefile/mage
-          go run $GOPATH/src/github.com/magefile/mage/bootstrap.go install
+          echo ${{env.GOPATH}}
 
       - name: Build
         run: mage build
