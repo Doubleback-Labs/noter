@@ -17,7 +17,7 @@ jobs:
       - name: Mage
         run: |
           go get -d github.com/magefile/mage
-          go run $GOPATH/src/github.com/magefile/mage/bootstrap.go install
+          go run ${{ env.GOPATH }}/src/github.com/magefile/mage/bootstrap.go install
 
       - name: Build
         run: mage build
