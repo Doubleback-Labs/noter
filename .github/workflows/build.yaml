@@ -16,7 +16,9 @@ jobs:
 
       - name: Mage
         run: |
+          ls
           cd mage
+          ls
           go run bootstrap.go install
           echo $PATH
           echo ${{env.GOPATH}}
