@@ -33,3 +33,7 @@ func init() {
 	viper.SetDefault("contentDir", fmt.Sprintf("%s/.noter/notes", home))
 	viper.SetDefault("editor", "code")
 }
+
+func Save() {
+	viper.WriteConfig()
+}

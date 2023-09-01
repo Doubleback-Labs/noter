@@ -6,8 +6,11 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"time"
 
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -15,7 +18,8 @@ import (
 var cfgFile string
 var contentDir string
 var editor string
-var debug bool
+var contentName string
+var hugoPost bool
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -41,15 +45,14 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.noter/cfg.yaml)")
-	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "config file (default is $HOME/.noter/cfg.yaml)")
 	rootCmd.PersistentFlags().StringVar(&contentDir, "contentDir", "", "content directory (default is $HOME/.noter/notes)")
 	rootCmd.PersistentFlags().StringVar(&editor, "editor", "", "editor that can be opened like 'app filename'")
-
+	rootCmd.PersistentFlags().StringVarP(&contentName, "contentName", "c", time.Now().Format(time.DateOnly), "content directory (default is $HOME/.noter/notes)")
+	rootCmd.PersistentFlags().BoolVarP(&hugoPost, "hugoPost", "p", false, "content directory (default is $HOME/.noter/notes)")
+	viper.BindPFlag("contentName", rootCmd.PersistentFlags().Lookup("contentName"))
+	viper.BindPFlag("hugoPost", rootCmd.PersistentFlags().Lookup("hugoPost"))
 	viper.BindPFlag("contentDir", rootCmd.PersistentFlags().Lookup("contentDir"))
-	viper.BindPFlag("debug", rootCmd.PersistentFlags().Lookup("debug"))
-
-	viper.SetDefault("debug", false)
-
+	viper.BindPFlag("editor", rootCmd.PersistentFlags().Lookup("editor"))
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -89,4 +92,42 @@ func create(p string) (*os.File, error) {
 		return nil, err
 	}
 	return os.Create(p)
+}
+
+func NewPost() {
+	contentPath := viper.GetString("contentDir")
+	contentName := viper.GetString("contentName")
+	editor := viper.GetString("editor")
+
+	if hugoPost {
+		contentPath = newHugoContent(contentPath, contentName)
+	}
+
+	contentName = fmt.Sprintf("%s.md", contentName)
+
+	f, err := os.OpenFile(fmt.Sprintf("%s/%s", contentPath, contentName), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Debug().Msg(err.Error())
+	}
+	defer f.Close()
+	if _, err := f.WriteString(fmt.Sprintf("\n## %s\n", time.Now().Format(time.TimeOnly))); err != nil {
+		log.Debug().Msg(err.Error())
+	}
+
+	editorCommend := exec.Command(editor, contentName)
+	editorCommend.Dir = contentPath
+	err = editorCommend.Run()
+	if err != nil {
+		fmt.Printf("Err %v", err)
+	}
+}
+
+func newHugoContent(contentPath string, name string) string {
+	hugoCmd := exec.Command("hugo", "new", "content", fmt.Sprintf("posts/%v.md", name))
+	hugoCmd.Dir = contentPath
+	if err := hugoCmd.Run(); err != nil {
+		log.Fatal().Msgf("hugo err %v", err)
+	}
+
+	return fmt.Sprintf("%s/content/posts", contentPath)
 }
