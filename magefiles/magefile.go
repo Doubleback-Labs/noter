@@ -13,10 +13,21 @@ import (
 
 var appName = "noter"
 
-func Build() error {
+func BuildMacOS() error {
 	mg.Deps(InstallDeps)
 	fmt.Println("Building...")
-	cmd := exec.Command("go", "build", "-o", appName, ".")
+	os.Setenv("GOOS", "darwin")
+	os.Setenv("GOARCH", "amd64")
+	cmd := exec.Command("go", "build", "-o", fmt.Sprintf("./bin/macos/%s", appName), ".")
+	return cmd.Run()
+}
+
+func BuildLinux() error {
+	mg.Deps(InstallDeps)
+	fmt.Println("Building...")
+	os.Setenv("GOOS", "linux")
+	os.Setenv("GOARCH", "amd64")
+	cmd := exec.Command("go", "build", "-o", fmt.Sprintf("./bin/linux/%s", appName), ".")
 	return cmd.Run()
 }
 
@@ -29,5 +40,7 @@ func InstallDeps() error {
 // Clean up after yourself
 func Clean() {
 	fmt.Println("Cleaning...")
+	home, _ := os.UserHomeDir()
+	os.RemoveAll(fmt.Sprintf("%s/.noter", home))
 	os.RemoveAll(appName)
 }
