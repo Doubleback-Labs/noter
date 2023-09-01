@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/rs/zerolog"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -25,24 +24,14 @@ var rootCmd = &cobra.Command{
 	Long: `noter is a simple app to open a GUI (atm) editor of your choice assuming it has a 'app filename' command.
 Files are stored in a central repo of your choosing.
 	`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
 	Run: func(cmd *cobra.Command, args []string) {
-		zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
-
-		zerolog.SetGlobalLevel(zerolog.InfoLevel)
-		if viper.GetBool("debug") {
-			zerolog.SetGlobalLevel(zerolog.DebugLevel)
-		}
-
-		newCmd.Execute()
+		NewPost()
 	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-
 	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)

@@ -40,5 +40,7 @@ func InstallDeps() error {
 // Clean up after yourself
 func Clean() {
 	fmt.Println("Cleaning...")
+	home, _ := os.UserHomeDir()
+	os.RemoveAll(fmt.Sprintf("%s/.noter", home))
 	os.RemoveAll(appName)
 }

@@ -1,4 +1,4 @@
-module com.doublebacklabs/noter
+module github.com/Doubleback-Labs/noter
 
 go 1.21.0
 

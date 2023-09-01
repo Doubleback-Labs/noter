@@ -28,28 +28,28 @@ If the hugo flag is passed, it will will assume that your central note repo is t
 create the while in the posts folder
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		log.Info().Msg("Executing `new` command")
-		contentPath := viper.GetString("contentDir")
-		contentName := viper.GetString("contentName")
-		editor := viper.GetString("editor")
-
-		if hugoPost {
-			contentPath = newHugoContent(contentPath, contentName)
-		}
-
-		log.Debug().Msgf("updated content path : %v", contentPath)
-
-		editorCommend := exec.Command(editor, fmt.Sprintf("%s.md", contentName))
-		editorCommend.Dir = contentPath
-		err := editorCommend.Run()
-		if err != nil {
-			fmt.Printf("Err %v", err)
-		}
+		NewPost()
 	},
 }
 
+func NewPost() {
+	contentPath := viper.GetString("contentDir")
+	contentName := viper.GetString("contentName")
+	editor := viper.GetString("editor")
+
+	if hugoPost {
+		contentPath = newHugoContent(contentPath, contentName)
+	}
+
+	editorCommend := exec.Command(editor, fmt.Sprintf("%s.md", contentName))
+	editorCommend.Dir = contentPath
+	err := editorCommend.Run()
+	if err != nil {
+		fmt.Printf("Err %v", err)
+	}
+}
+
 func newHugoContent(contentPath string, name string) string {
-	log.Debug().Msgf("New Hugo Post %s", fmt.Sprintf("posts/%v.md", name))
 	hugoCmd := exec.Command("hugo", "new", "content", fmt.Sprintf("posts/%v.md", name))
 	hugoCmd.Dir = contentPath
 	if err := hugoCmd.Run(); err != nil {
@@ -57,7 +57,6 @@ func newHugoContent(contentPath string, name string) string {
 	}
 
 	return fmt.Sprintf("%s/content/posts", contentPath)
-
 }
 
 func init() {
