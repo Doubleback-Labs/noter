@@ -4,10 +4,14 @@ Copyright © 2023 TJ Gillis <tj@doublebacklabs.com>
 package main
 
 import (
+	_ "embed"
+
 	"github.com/Doubleback-Labs/noter/cmd"
 )
 
-func main() {
+//go:embed VERSION
+var version string
 
-	cmd.Execute()
+func main() {
+	cmd.Execute(version)
 }

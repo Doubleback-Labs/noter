@@ -1,33 +1,52 @@
 name: noter
 
-on: [push]
+on:
+  push:
+    paths:
+      - 'VERSION'
 
 jobs:
   build:
-
-    runs-on: ubuntu-latest
+      runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v4
         with:
            go-version: '1.21.0'
 
+      - name: Create tag
+        uses: actions/github-script@v5
+        with:
+          script: |
+            github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'refs/tags/$(cat VERSION)',
+              sha: context.sha
+            })
+
       - name: Build Linux
         uses: magefile/mage-action@v2
         with:
           version: latest
-          args: buildlinux
+          args: linux
 
       - name: Build MacOS
         uses: magefile/mage-action@v2
         with:
           version: latest
-          args: buildmacos
-
+          args: mac
+          
+      - name: Build Windows
+        uses: magefile/mage-action@v2
+        with:
+          version: latest
+          args: windows
+        
       - name: Upload
         uses: actions/upload-artifact@v3
         with:
-          name: noter
+          name: noter-linux
           path: ./bin/linux/noter
 
       - name: Upload
@@ -35,3 +54,9 @@ jobs:
         with:
           name: noter-mac
           path: ./bin/macos/noter
+
+      - name: Upload
+        uses: actions/upload-artifact@v3
+        with:
+          name: noter-windows
+          path: ./bin/windows/noter

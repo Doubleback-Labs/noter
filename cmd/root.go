@@ -33,6 +33,7 @@ var noteRepo string
 var editor string
 var name string
 var isHugoPost bool
+var version string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -45,13 +46,14 @@ var rootCmd = &cobra.Command{
 Files are stored in a central repo of your choosing.
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		Post(GetFilePath())
+		createNote(getFilePath())
 	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
+func Execute(v string) {
+	version = v
 	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
@@ -67,24 +69,19 @@ func init() {
 	rootCmd.Flags().StringVarP(&name, typedNoterName, "n", "", "defaults to DateOnly name (yyyy-mm-dd)")
 	rootCmd.Flags().BoolVarP(&isHugoPost, typedNoterIsHugo, "p", false, "If true will use hugo-cli to create and open post")
 
-	//viper.BindPFlag(typedNoterName, rootCmd.Flags().Lookup(typedNoterName))
-	//viper.BindPFlag(typedNoterIsHugo, rootCmd.Flags().Lookup(typedNoterIsHugo))
 	viper.BindPFlag(typedNoterNoteRepo, rootCmd.Flags().Lookup(typedNoterNoteRepo))
 	viper.BindPFlag(typedNoterEditor, rootCmd.Flags().Lookup(typedNoterEditor))
 
 	cobra.OnInitialize(initConfig)
-
 }
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
+	home, _ := os.UserHomeDir()
+
 	if cfgFile != "" {
 		viper.SetConfigFile(cfgFile)
 	} else {
-		// Find home directory.
-		home, err := os.UserHomeDir()
-		cobra.CheckErr(err)
-
 		// Search config in home directory with name ".noter" (without extension).
 		viper.AddConfigPath(fmt.Sprintf("%s/.noter", home))
 		viper.SetConfigType("yaml")
@@ -95,16 +92,11 @@ func initConfig() {
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err != nil {
-		fmt.Println(err)
-
-		home, err := os.UserHomeDir()
-		cobra.CheckErr(err)
-
 		createConfig(fmt.Sprintf("%s/.noter/cfg.yaml", home))
 		viper.WriteConfig()
 
 		if err := os.MkdirAll(fmt.Sprintf("%s/.noter/notes", home), 0770); err != nil {
-			fmt.Println(err)
+			log.Fatal().Msg(err.Error())
 		}
 	}
 }
@@ -116,7 +108,7 @@ func createConfig(p string) (*os.File, error) {
 	return os.Create(p)
 }
 
-func GetFilePath() NoterFileData {
+func getFilePath() NoterFileData {
 	noteRepo := viper.GetString(typedNoterNoteRepo)
 	editor := viper.GetString(typedNoterEditor)
 	isHugo := viper.GetBool(typedNoterIsHugo)
@@ -150,17 +142,17 @@ func newHugoContent(path string, name string) string {
 	return fmt.Sprintf("%s/content/posts/%s.md", path, name)
 }
 
-func Post(d NoterFileData) {
+func createNote(d NoterFileData) {
 	f, err := os.OpenFile(fmt.Sprintf("%s/%s", d.Path, d.Name), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
-		log.Debug().Msg(err.Error())
+		log.Fatal().Msg(err.Error())
 	}
 
 	defer f.Close()
 
 	if d.DefaultName {
 		if _, err := f.WriteString(fmt.Sprintf("\n## %s\n", time.Now().Format(time.TimeOnly))); err != nil {
-			log.Debug().Msg(err.Error())
+			log.Fatal().Msg(err.Error())
 		}
 	}
 

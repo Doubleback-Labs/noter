@@ -5,7 +5,7 @@ Files are stored in a central repo of your choosing but will default to $HOME/.n
 
 ## Install 
 ```
-go install github.com/Doubleback-Labs/noter@v0.3.0
+go install github.com/Doubleback-Labs/noter@latest
 ```
 
 ## Building
