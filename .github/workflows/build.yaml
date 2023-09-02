@@ -10,6 +10,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v4
@@ -53,5 +55,3 @@ jobs:
           tag_name: v${{ steps.vars.outputs.version }}
           files: |
             ./bin/linux/noter
-            ./bin/mac/noter
-            ./bin/windows/noter
