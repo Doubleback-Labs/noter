@@ -34,7 +34,17 @@ func Windows() error {
 func build(target string) error {
 	mg.Deps(InstallDeps)
 	fmt.Println("Building...")
-	cmd := exec.Command("go", "build", "-o", fmt.Sprintf("./bin/%s/%s", target, appName), ".")
+	name := fmt.Sprintf("./bin/%s", appName)
+	switch target {
+	case "mac":
+		name = fmt.Sprintf("%s-darwin_amd64", name)
+	case "linux":
+		name = fmt.Sprintf("%s-linux_amd64", name)
+	case "windows":
+		name = fmt.Sprintf("%s-windows_amd64.exe", name)
+	}
+
+	cmd := exec.Command("go", "build", "-o", name, ".")
 	return cmd.Run()
 }
 

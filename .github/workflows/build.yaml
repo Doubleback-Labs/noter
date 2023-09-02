@@ -54,4 +54,6 @@ jobs:
         with:
           tag_name: v${{ steps.vars.outputs.version }}
           files: |
-            ./bin/linux/noter
+            ./bin/noter-darwin_amd64
+            ./bin/noter-linux_amd64
+            ./bin/noter-windows_amd64.exe
