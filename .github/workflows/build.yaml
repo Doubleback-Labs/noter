@@ -19,7 +19,7 @@ jobs:
       - name: Create tag
         uses: actions/github-script@v5
         with:
-          script: |
+          run: |
             export V=$(cat VERSION)
             github.rest.git.createRef({
               owner: context.repo.owner,
@@ -27,7 +27,8 @@ jobs:
               ref: "refs/tags/$V",
               sha: context.sha
             })
-
+          shell: bash
+          
       - name: Build Linux
         uses: magefile/mage-action@v2
         with:
