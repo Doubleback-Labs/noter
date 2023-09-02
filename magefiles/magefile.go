@@ -13,7 +13,7 @@ import (
 
 var appName = "noter"
 
-func BuildMacOS() error {
+func Mac() error {
 	mg.Deps(InstallDeps)
 	fmt.Println("Building...")
 	os.Setenv("GOOS", "darwin")
@@ -22,7 +22,7 @@ func BuildMacOS() error {
 	return cmd.Run()
 }
 
-func BuildLinux() error {
+func Linux() error {
 	mg.Deps(InstallDeps)
 	fmt.Println("Building...")
 	os.Setenv("GOOS", "linux")

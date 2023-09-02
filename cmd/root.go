@@ -15,21 +15,37 @@ import (
 	"github.com/spf13/viper"
 )
 
+const typedNoterNoteRepo string = "noteRepo"
+const typedNoterName string = "name"
+const typedNoterEditor string = "editor"
+const typedNoterIsHugo string = "isHugoPost"
+
+type NoterFileData struct {
+	Path        string
+	Name        string
+	Editor      string
+	IsHugo      bool
+	DefaultName bool
+}
+
 var cfgFile string
-var contentDir string
+var noteRepo string
 var editor string
-var contentName string
-var hugoPost bool
+var name string
+var isHugoPost bool
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "noter",
 	Short: "noter helps make note taking easier.",
-	Long: `noter is a simple app to open a GUI (atm) editor of your choice assuming it has a 'app filename' command.
+	Long: `noter is a simple app to open an editor of your choice assuming it has a 'app filename' command.
+	
+	eg: code hello.md or micro hello.md
+
 Files are stored in a central repo of your choosing.
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		NewPost()
+		Post(GetFilePath())
 	},
 }
 
@@ -43,16 +59,21 @@ func Execute() {
 }
 
 func init() {
+	home, _ := os.UserHomeDir()
+	rootCmd.Flags().StringVarP(&cfgFile, "config", "c", fmt.Sprintf("%s/.noter/cfg.yaml", home), "config file (default is $HOME/.noter/cfg.yaml)")
+	rootCmd.Flags().StringVarP(&noteRepo, typedNoterNoteRepo, "r", fmt.Sprintf("%s/.noter/notes", home), "content directory (default is $HOME/.noter/notes)")
+	rootCmd.Flags().StringVarP(&editor, typedNoterEditor, "e", "nano", "editor that can be opened like 'app filename'")
+	// Default value for name left intentinally empty to determine if using default name or not
+	rootCmd.Flags().StringVarP(&name, typedNoterName, "n", "", "defaults to DateOnly name (yyyy-mm-dd)")
+	rootCmd.Flags().BoolVarP(&isHugoPost, typedNoterIsHugo, "p", false, "If true will use hugo-cli to create and open post")
+
+	//viper.BindPFlag(typedNoterName, rootCmd.Flags().Lookup(typedNoterName))
+	//viper.BindPFlag(typedNoterIsHugo, rootCmd.Flags().Lookup(typedNoterIsHugo))
+	viper.BindPFlag(typedNoterNoteRepo, rootCmd.Flags().Lookup(typedNoterNoteRepo))
+	viper.BindPFlag(typedNoterEditor, rootCmd.Flags().Lookup(typedNoterEditor))
+
 	cobra.OnInitialize(initConfig)
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.noter/cfg.yaml)")
-	rootCmd.PersistentFlags().StringVar(&contentDir, "contentDir", "", "content directory (default is $HOME/.noter/notes)")
-	rootCmd.PersistentFlags().StringVar(&editor, "editor", "", "editor that can be opened like 'app filename'")
-	rootCmd.PersistentFlags().StringVarP(&contentName, "contentName", "c", time.Now().Format(time.DateOnly), "content directory (default is $HOME/.noter/notes)")
-	rootCmd.PersistentFlags().BoolVarP(&hugoPost, "hugoPost", "p", false, "content directory (default is $HOME/.noter/notes)")
-	viper.BindPFlag("contentName", rootCmd.PersistentFlags().Lookup("contentName"))
-	viper.BindPFlag("hugoPost", rootCmd.PersistentFlags().Lookup("hugoPost"))
-	viper.BindPFlag("contentDir", rootCmd.PersistentFlags().Lookup("contentDir"))
-	viper.BindPFlag("editor", rootCmd.PersistentFlags().Lookup("editor"))
+
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -79,7 +100,8 @@ func initConfig() {
 		home, err := os.UserHomeDir()
 		cobra.CheckErr(err)
 
-		create(fmt.Sprintf("%s/.noter/cfg.yaml", home))
+		createConfig(fmt.Sprintf("%s/.noter/cfg.yaml", home))
+		viper.WriteConfig()
 
 		if err := os.MkdirAll(fmt.Sprintf("%s/.noter/notes", home), 0770); err != nil {
 			fmt.Println(err)
@@ -87,47 +109,67 @@ func initConfig() {
 	}
 }
 
-func create(p string) (*os.File, error) {
+func createConfig(p string) (*os.File, error) {
 	if err := os.MkdirAll(filepath.Dir(p), 0770); err != nil {
 		return nil, err
 	}
 	return os.Create(p)
 }
 
-func NewPost() {
-	contentPath := viper.GetString("contentDir")
-	contentName := viper.GetString("contentName")
-	editor := viper.GetString("editor")
+func GetFilePath() NoterFileData {
+	noteRepo := viper.GetString(typedNoterNoteRepo)
+	editor := viper.GetString(typedNoterEditor)
+	isHugo := viper.GetBool(typedNoterIsHugo)
+	defaultName := false
 
-	if hugoPost {
-		contentPath = newHugoContent(contentPath, contentName)
+	if name == "" {
+		name = time.Now().Format(time.DateOnly)
+		defaultName = true
 	}
 
-	contentName = fmt.Sprintf("%s.md", contentName)
-
-	f, err := os.OpenFile(fmt.Sprintf("%s/%s", contentPath, contentName), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		log.Debug().Msg(err.Error())
-	}
-	defer f.Close()
-	if _, err := f.WriteString(fmt.Sprintf("\n## %s\n", time.Now().Format(time.TimeOnly))); err != nil {
-		log.Debug().Msg(err.Error())
+	if isHugo {
+		noteRepo = newHugoContent(noteRepo, name)
 	}
 
-	editorCommend := exec.Command(editor, contentName)
-	editorCommend.Dir = contentPath
-	err = editorCommend.Run()
-	if err != nil {
-		fmt.Printf("Err %v", err)
+	return NoterFileData{
+		Path:        noteRepo,
+		Name:        name,
+		Editor:      editor,
+		IsHugo:      isHugo,
+		DefaultName: defaultName,
 	}
 }
 
-func newHugoContent(contentPath string, name string) string {
-	hugoCmd := exec.Command("hugo", "new", "content", fmt.Sprintf("posts/%v.md", name))
-	hugoCmd.Dir = contentPath
-	if err := hugoCmd.Run(); err != nil {
+func newHugoContent(path string, name string) string {
+	cmd := exec.Command("hugo", "new", "content", fmt.Sprintf("posts/%v.md", name))
+	cmd.Dir = path
+	if err := cmd.Run(); err != nil {
 		log.Fatal().Msgf("hugo err %v", err)
 	}
 
-	return fmt.Sprintf("%s/content/posts", contentPath)
+	return fmt.Sprintf("%s/content/posts/%s.md", path, name)
+}
+
+func Post(d NoterFileData) {
+	f, err := os.OpenFile(fmt.Sprintf("%s/%s", d.Path, d.Name), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Debug().Msg(err.Error())
+	}
+
+	defer f.Close()
+
+	if d.DefaultName {
+		if _, err := f.WriteString(fmt.Sprintf("\n## %s\n", time.Now().Format(time.TimeOnly))); err != nil {
+			log.Debug().Msg(err.Error())
+		}
+	}
+
+	cmd := exec.Command(d.Editor, d.Name)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Dir = d.Path
+	err = cmd.Run()
+	if err != nil {
+		fmt.Printf("Err %v", err)
+	}
 }
