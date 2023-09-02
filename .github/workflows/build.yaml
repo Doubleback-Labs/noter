@@ -20,14 +20,13 @@ jobs:
         uses: actions/github-script@v5
         with:
           script: |
-            set -x
+            export V=$(cat VERSION)
             github.rest.git.createRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              ref: 'refs/tags/$(cat VERSION)',
+              ref: "refs/tags/$V",
               sha: context.sha
             })
-            set +x
 
       - name: Build Linux
         uses: magefile/mage-action@v2
