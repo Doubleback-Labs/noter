@@ -16,7 +16,7 @@ var appName = "noter"
 func Mac() error {
 	os.Setenv("GOOS", "darwin")
 	os.Setenv("GOARCH", "amd64")
-	return build("windows")
+	return build("mac")
 }
 
 func Linux() error {
