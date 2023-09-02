@@ -15,19 +15,19 @@ jobs:
       - uses: actions/setup-go@v4
         with:
            go-version: '1.21.0'
-
+      - name: Get version
+        id: vars
+        run: echo ::set-output name=version::$(cat VERSION)
       - name: Create tag
         uses: actions/github-script@v5
         with:
-          run: |
-            export V=$(cat VERSION)
+          script: |
             github.rest.git.createRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              ref: "refs/tags/$V",
+              ref: "refs/tags/${{ steps.vars.outputs.version }}",
               sha: context.sha
             })
-          shell: bash
           
       - name: Build Linux
         uses: magefile/mage-action@v2
