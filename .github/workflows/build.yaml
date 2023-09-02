@@ -1,6 +1,7 @@
 name: noter
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - 'VERSION'
